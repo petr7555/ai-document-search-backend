@@ -4,8 +4,7 @@ on: push
 
 jobs:
   lint-and-test:
-    permissions:
-      pull-requests: write
+    permissions: write-all
     runs-on: ubuntu-latest
 
     strategy:
