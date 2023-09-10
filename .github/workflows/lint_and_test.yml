@@ -42,12 +42,13 @@ jobs:
         run: poetry run black --config black.py.toml . --check
 
       - name: Test
-        run: poetry run pytest --cov=ai_document_search_backend --cov-report=xml --cov-report=term-missing --cov-fail-under=70
+        run: poetry run pytest --cov=ai_document_search_backend --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov-fail-under=70 | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         if: always()
         with:
-          pytest-xml-coverage-path: ./coverage.xml
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
           unique-id-for-comment: ${{ matrix.python-version }}
           default-branch: master

@@ -2,4 +2,5 @@
 .pytest_cache
 htmlcov
 .coverage
-coverage.xml
+pytest.xml
+pytest-coverage.txt
