@@ -14,7 +14,7 @@
 
 ### Unit tests
 
-- `poetry run pytest --cov=ai_document_search_backend --cov-report=html`
+- `poetry run pytest`
 
 ### Lint autoformat
 
