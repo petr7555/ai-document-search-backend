@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-LOCKOUT_TIME_SECONDS = 60*15
-LOCKOUT_INTERVAL_SECONDS = 60*5
+LOCKOUT_TIME_SECONDS = 60 * 15
+LOCKOUT_INTERVAL_SECONDS = 60 * 5
 MAX_LOGIN_ATTEMPTS = 10
 
 
