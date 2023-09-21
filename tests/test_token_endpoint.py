@@ -27,6 +27,17 @@ def test_valid_authentication():
 def test_lockout():
     response = client.post("/auth/token", data={"username": "marius", "password": "123"})
     assert response.status_code == 200
+
+    # Test that a successful login resets the number of failed ones
+    for i in range(MAX_LOGIN_ATTEMPTS - 1):
+        print(i)
+        response = client.post("/auth/token", data={"username": "marius", "password": "123q"})
+        assert response.status_code == 400
+        assert response.json() == {"detail": "Incorrect username or password"}
+    response = client.post("/auth/token", data={"username": "marius", "password": "123"})
+    assert response.status_code == 200
+
+    # Test that going over the limit locks the account, even if you retry with the correct credentials
     for i in range(MAX_LOGIN_ATTEMPTS - 1):
         print(i)
         response = client.post("/auth/token", data={"username": "marius", "password": "123q"})
