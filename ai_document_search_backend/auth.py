@@ -7,16 +7,16 @@ from pydantic import BaseModel
 
 LOCKOUT_TIME_SECONDS = 60 * 15
 LOCKOUT_INTERVAL_SECONDS = 60 * 5
-MAX_LOGIN_ATTEMPTS = 10
+MAX_LOGIN_ATTEMPTS = 5
 
 
 class User(BaseModel):
     username: str
     email: str
-    fullName: str
+    full_name: str
     disabled: bool
-    disabledTime: datetime
-    failedLogins: list
+    disabled_time: datetime
+    failed_logins: list
 
 
 class UserInDB(User):
@@ -26,12 +26,12 @@ class UserInDB(User):
 fake_users_db = {
     "marius": {
         "username": "marius",
-        "fullName": "Marius Berdal Gaalaas",
+        "full_name": "Marius Berdal Gaalaas",
         "email": "marius@gmail.com",
         "password": "123",
         "disabled": False,
-        "disabledTime": 0,
-        "failedLogins": [],
+        "disabled_time": 0,
+        "failed_logins": [],
     }
 }
 
@@ -42,28 +42,28 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Called on failed login
 # Checks how many recent login failures the user has, if over the limit, disable them
-def checkLockout(username: str):
+def check_lockout(username: str):
     user_dict = fake_users_db.get(username)
-    lockoutInterval = timedelta(seconds=LOCKOUT_INTERVAL_SECONDS)
+    lockout_interval = timedelta(seconds=LOCKOUT_INTERVAL_SECONDS)
     now = datetime.utcnow()
-    for loginFail in user_dict["failedLogins"].copy():
-        if loginFail + lockoutInterval < now:
-            user_dict["failedLogins"].remove(loginFail)
+    for login_fail in user_dict["failed_logins"].copy():
+        if login_fail + lockout_interval < now:
+            user_dict["failed_logins"].remove(loginFail)
 
-    user_dict["failedLogins"].append(datetime.utcnow())
-    if len(user_dict["failedLogins"]) >= MAX_LOGIN_ATTEMPTS:
+    user_dict["failed_logins"].append(datetime.utcnow())
+    if len(user_dict["failed_logins"]) >= MAX_LOGIN_ATTEMPTS:
         user_dict["disabled"] = True
-        user_dict["disabledTime"] = datetime.utcnow()
+        user_dict["disabled_time"] = datetime.utcnow()
         print("LOCKOUT")
         return True
     return False
 
 
 # Called to check if disabled user should be opened again
-def checkLockIn(username: str):
+def check_lockin(username: str):
     user_dict = fake_users_db.get(username)
-    timedeltaExpire = timedelta(seconds=LOCKOUT_TIME_SECONDS)
-    if user_dict["disabled"] and user_dict["disabledTime"] + timedeltaExpire < datetime.utcnow():
+    timedelta_expire = timedelta(seconds=LOCKOUT_TIME_SECONDS)
+    if user_dict["disabled"] and user_dict["disabled_time"] + timedelta_expire < datetime.utcnow():
         print("LOCKIN")
         user_dict["disabled"] = False
         user_dict["disabled"] = 0
@@ -79,15 +79,15 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     user = UserInDB(**user_dict)
     password = form_data.password
-    if user.disabled and not checkLockIn(user.username):
+    if user.disabled and not check_lockin(user.username):
         raise HTTPException(
             status_code=400, detail="Failed login attempts exceed limit. Account locked."
         )
     if not password == user.password:
-        if checkLockout(user.username):
+        if check_lockout(user.username):
             raise HTTPException(
                 status_code=400, detail="Failed login attempts exceed limit. Account locked."
             )
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user_dict["failedLogins"].clear()
+    user_dict["failed_logins"].clear()
     return {"access_token": user.username, "token_type": "bearer"}
