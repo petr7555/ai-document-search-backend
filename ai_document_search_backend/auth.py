@@ -48,7 +48,7 @@ def check_lockout(username: str):
     now = datetime.utcnow()
     for login_fail in user_dict["failed_logins"].copy():
         if login_fail + lockout_interval < now:
-            user_dict["failed_logins"].remove(loginFail)
+            user_dict["failed_logins"].remove(login_fail)
 
     user_dict["failed_logins"].append(datetime.utcnow())
     if len(user_dict["failed_logins"]) >= MAX_LOGIN_ATTEMPTS:
