@@ -1,10 +1,16 @@
+import os
 from locust import HttpUser, task, between
+from dotenv import load_dotenv
 
 
 class TestUser(HttpUser):
     wait_time = between(0.5, 2)
-    test_username = "user"
-    test_password = "pass"
+
+    def credentials(self):
+        load_dotenv()
+        test_username = os.getenv("AUTH_USERNAME")
+        test_password = os.getenv("AUTH_PASSWORD")
+        return test_username, test_password
 
     @task
     def health(self):
@@ -12,22 +18,23 @@ class TestUser(HttpUser):
 
     @task
     def authenticate(self):
-        self.client.post(
-            "/auth/token", data={"username": self.test_username, "password": self.test_password}
-        )
+        test_username, test_password = self.credentials()
+        self.client.post("/auth/token", data={"username": test_username, "password": test_password})
 
     @task
     def get_conversation(self):
+        test_username, test_password = self.credentials()
         response = self.client.post(
-            "/auth/token", data={"username": self.test_username, "password": self.test_password}
+            "/auth/token", data={"username": test_username, "password": test_password}
         )
         token = response.json()["access_token"]
         response = self.client.get("/conversation", headers={"Authorization": f"Bearer {token}"})
 
     @task
     def ask_question(self):
+        test_username, test_password = self.credentials()
         response = self.client.post(
-            "/auth/token", data={"username": self.test_username, "password": self.test_password}
+            "/auth/token", data={"username": test_username, "password": test_password}
         )
         token = response.json()["access_token"]
 
