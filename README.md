@@ -47,6 +47,11 @@ AUTH_PASSWORD=any_password
 
 - `poetry run pytest`
 
+### Load tests
+
+- Navigate to `\ai-document-search-backend\tests\load_tests`
+- `poetry run locust`
+ 
 ### Lint autoformat
 
 - `poetry run black --config black.py.toml .`
