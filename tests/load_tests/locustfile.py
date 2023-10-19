@@ -39,7 +39,7 @@ class TestUser(HttpUser):
         token = response.json()["access_token"]
 
         response = self.client.post(
-            "/chatbot/",
+            "/chatbot",
             headers={"Authorization": f"Bearer {token}"},
             json={"question": "What is the Loan to value ratio?"},
         )
