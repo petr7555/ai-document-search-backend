@@ -28,6 +28,7 @@ unstructured = {extras = ["pdf"], version = "^0.10.15"}
 pymupdf = "^1.23.3"
 chromadb = "^0.4.13"
 azure-cosmos = "^4.5.1"
+lark = "^1.1.8"
 
 
 [tool.poetry.group.dev.dependencies]

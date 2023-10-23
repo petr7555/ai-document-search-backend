@@ -3,9 +3,11 @@ from pathlib import Path
 import pandas as pd
 import weaviate
 from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.query_constructor.base import AttributeInfo
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.embeddings import OpenAIEmbeddings
+from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain.vectorstores import Weaviate
 from pydantic import BaseModel
 
@@ -15,6 +17,15 @@ from ai_document_search_backend.database_providers.conversation_database import 
 from ai_document_search_backend.services.base_service import BaseService
 
 Exchange = tuple[str, str]
+
+metadata_field_info = [
+    AttributeInfo(
+        name="isin",
+        description="ID of the bond the document belongs to",
+        type="strong or list[string]",
+    ),
+]
+document_content_description = "Document containing information relating to a bond"
 
 
 class ChatbotAnswer(BaseModel):
@@ -76,12 +87,26 @@ class ChatbotService(BaseService):
             attributes=self.custom_metadata_properties + ["page"],
         )
         llm = ChatOpenAI(openai_api_key=self.openai_api_key, temperature=self.temperature)
+        retriever = SelfQueryRetriever.from_llm(
+            llm,
+            vectorstore,
+            document_content_description,
+            metadata_field_info,
+            verbose=self.verbose,
+        )
         qa = ConversationalRetrievalChain.from_llm(
             llm=llm,
-            retriever=vectorstore.as_retriever(),
+            retriever=retriever,
             verbose=self.verbose,
             return_source_documents=True,
         )
+        if len(chat_history):
+            qa = ConversationalRetrievalChain.from_llm(
+                llm=llm,
+                retriever=vectorstore.as_retriever(),
+                verbose=self.verbose,
+                return_source_documents=True,
+            )
 
         self.logger.info(f"Answering question: {question}")
         result = qa({"question": question, "chat_history": chat_history})

@@ -86,3 +86,19 @@ def test_chat_history(get_token):
     )
     assert response.status_code == 200
     assert response.json()["text"] == ANY_STR
+
+
+def test_isin_filtering(get_token):
+    """
+    This test runs against real OpenAI API and Weaviate instance.
+    APP_OPENAI_API_KEY and APP_WEAVIATE_API_KEY environment variables must be set.
+    """
+    response = client.post(
+        "/chatbot/",
+        headers={"Authorization": f"Bearer {get_token}"},
+        json={"question": "Who is the issuer of the bond NO0010768492?"},
+    )
+    assert response.status_code == 200
+
+    for source in response.json()["sources"][0:4]:
+        assert source["isin"] == "NO0010768492"
