@@ -1,10 +1,22 @@
 import os
-from locust import HttpUser, task, between
+import logging
+from locust import HttpUser, task, between, events
 from dotenv import load_dotenv
 
 
 class TestUser(HttpUser):
     wait_time = between(0.5, 2)
+
+    @events.quitting.add_listener
+    def _(self, environment, **kw):
+        if environment.stats.total.fail_ratio > 0.01:
+            logging.error("Test failed due to failure ratio > 1%")
+            environment.process_exit_code = 1
+        elif environment.stats.total.avg_response_time > 15000:
+            logging.error("Test failed due to average response time ratio > 200 ms")
+            environment.process_exit_code = 1
+        else:
+            environment.process_exit_code = 0
 
     def credentials(self):
         load_dotenv()

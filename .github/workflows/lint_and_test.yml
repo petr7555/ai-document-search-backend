@@ -52,6 +52,15 @@ jobs:
           set -o pipefail
           poetry run pytest --cov=ai_document_search_backend --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov-fail-under=70 | tee pytest-coverage.txt
 
+      - name: Load Test
+        env: 
+          APP_OPENAI_API_KEY: ${{ secrets.APP_OPENAI_API_KEY }}
+          APP_WEAVIATE_API_KEY: ${{ secrets.APP_WEAVIATE_API_KEY }}
+          COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
+          AUTH_USERNAME: ${{ secrets.AUTH_USERNAME}}
+          AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD}}
+        run: poetry run locust -f tests\load_tests\locustfile.py --host http://127.0.0.1:8000 -u 5 -r 5 -t 3m --headless
+
       - name: Pytest coverage comment
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
