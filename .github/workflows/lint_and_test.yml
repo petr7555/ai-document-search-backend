@@ -59,7 +59,10 @@ jobs:
           COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
           AUTH_USERNAME: ${{ secrets.AUTH_USERNAME}}
           AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD}}
-        run: poetry run locust -f tests\load_tests\locustfile.py --host http://127.0.0.1:8000 -u 5 -r 5 -t 3m --headless
+        run: |
+          cd tests
+          cd load_tests
+          poetry run locust --host http://127.0.0.1:8000 -u 5 -r 5 -t 3m --headless
 
       - name: Pytest coverage comment
         id: coverageComment
