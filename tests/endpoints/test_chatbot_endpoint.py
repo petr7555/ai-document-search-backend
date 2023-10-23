@@ -96,9 +96,14 @@ def test_isin_filtering(get_token):
     response = client.post(
         "/chatbot/",
         headers={"Authorization": f"Bearer {get_token}"},
+        json={"question": "Hello"},
+    )
+    response = client.post(
+        "/chatbot/",
+        headers={"Authorization": f"Bearer {get_token}"},
         json={"question": "Who is the issuer of the bond NO0010768492?"},
     )
     assert response.status_code == 200
 
-    for source in response.json()["sources"][0:4]:
+    for source in response.json()["sources"]:
         assert source["isin"] == "NO0010768492"
