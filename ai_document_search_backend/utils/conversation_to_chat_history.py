@@ -11,7 +11,14 @@ def conversation_to_chat_history(conversation: Conversation) -> list[Exchange]:
     Exchange is a tuple of (question, answer)
     """
 
-    return [
-        (conversation.messages[i].text, conversation.messages[i + 1].text)
-        for i in range(0, len(conversation.messages), 2)
-    ]
+    if len(conversation.messages) % 2 == 0:
+        return [
+            (conversation.messages[i].text, conversation.messages[i + 1].text)
+            for i in range(0, len(conversation.messages), 2)
+        ]
+    else:
+        messages = [
+            (conversation.messages[i].text, conversation.messages[i + 1].text)
+            for i in range(0, len(conversation.messages) - 1, 2)
+        ]
+        return messages
