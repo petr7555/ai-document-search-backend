@@ -2,11 +2,14 @@ from pathlib import Path
 
 import pandas as pd
 import weaviate
+from langchain import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.vectorstores import Weaviate
 from pydantic import BaseModel
+from langchain.callbacks.stdout import StdOutCallbackHandler
+from ai_document_search_backend.chains.source_metadata_chain import ContextSourceRetrievalChain
 
 from ai_document_search_backend.database_providers.conversation_database import (
     Source,
@@ -181,7 +184,7 @@ class ChatbotService(BaseService):
             openai_api_key=self.openai_api_key,
             temperature=self.temperature,
         )
-        qa = ConversationalRetrievalChain.from_llm(
+        ConversationalRetrievalChain.from_llm(
             llm=question_answering_llm,
             retriever=vectorstore.as_retriever(
                 search_kwargs={"additional": ["certainty", "distance"], "k": self.num_sources}
@@ -192,7 +195,24 @@ class ChatbotService(BaseService):
         )
 
         self.logger.info(f"Answering question: {question}")
-        result = qa({"question": question, "chat_history": chat_history})
+        # result = qa({"question": question, "chat_history": chat_history})
+        chain = ContextSourceRetrievalChain(
+            prompt=PromptTemplate.from_template("""{query}"""),
+            return_source_documents=True,
+            retriever=vectorstore.as_retriever(
+                search_kwargs={"additional": ["certainty", "distance"], "k": self.num_sources}
+            ),
+            llm=question_answering_llm,
+            condense_question_llm=condense_question_llm,
+        )
+        result = None
+        if self.verbose:
+            result = chain.run(
+                {"query": question, "chat_history": chat_history},
+                callbacks=[StdOutCallbackHandler()],
+            )
+        else:
+            result = chain.run({"query": question, "chat_history": chat_history})
         answer_text = result["answer"]
         self.logger.info(f"Answer: {answer_text}")
         sources = [
