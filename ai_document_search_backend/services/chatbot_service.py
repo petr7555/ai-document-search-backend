@@ -3,7 +3,6 @@ from pathlib import Path
 import pandas as pd
 import weaviate
 from langchain import PromptTemplate
-from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.vectorstores import Weaviate
@@ -184,18 +183,8 @@ class ChatbotService(BaseService):
             openai_api_key=self.openai_api_key,
             temperature=self.temperature,
         )
-        ConversationalRetrievalChain.from_llm(
-            llm=question_answering_llm,
-            retriever=vectorstore.as_retriever(
-                search_kwargs={"additional": ["certainty", "distance"], "k": self.num_sources}
-            ),
-            condense_question_llm=condense_question_llm,
-            return_source_documents=True,
-            verbose=self.verbose,
-        )
 
         self.logger.info(f"Answering question: {question}")
-        # result = qa({"question": question, "chat_history": chat_history})
         chain = ContextSourceRetrievalChain(
             prompt=PromptTemplate.from_template("""{query}"""),
             return_source_documents=True,
